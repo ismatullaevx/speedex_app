@@ -58,37 +58,56 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   // ── Stats grid ────────────────────────────────────────
-                  GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.55,
+                  Column(
                     children: [
-                      StatCard(
-                        icon: Icons.speed_rounded,
-                        value: '${Formatter.speed(stats.maxSpeedKmh)} km/h',
-                        label: 'MAX SPEED',
-                        accentColor: AppColors.danger,
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: StatCard(
+                                icon: Icons.speed_rounded,
+                                value: '${Formatter.speed(stats.maxSpeedKmh)} km/h',
+                                label: 'MAX SPEED',
+                                accentColor: AppColors.danger,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: StatCard(
+                                icon: Icons.show_chart_rounded,
+                                value: '${Formatter.speed(stats.avgSpeedKmh)} km/h',
+                                label: 'AVG SPEED',
+                                accentColor: AppColors.secondary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      StatCard(
-                        icon: Icons.show_chart_rounded,
-                        value: '${Formatter.speed(stats.avgSpeedKmh)} km/h',
-                        label: 'AVG SPEED',
-                        accentColor: AppColors.secondary,
-                      ),
-                      StatCard(
-                        icon: Icons.route_rounded,
-                        value: Formatter.distance(stats.distanceMeters),
-                        label: 'DISTANCE',
-                        accentColor: AppColors.primary,
-                      ),
-                      StatCard(
-                        icon: Icons.timer_rounded,
-                        value: Formatter.duration(stats.elapsedSeconds),
-                        label: 'TIME',
-                        accentColor: AppColors.warning,
+                      const SizedBox(height: 12),
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: StatCard(
+                                icon: Icons.route_rounded,
+                                value: Formatter.distance(stats.distanceMeters),
+                                label: 'DISTANCE',
+                                accentColor: AppColors.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: StatCard(
+                                icon: Icons.timer_rounded,
+                                value: Formatter.duration(stats.elapsedSeconds),
+                                label: 'TIME',
+                                accentColor: AppColors.warning,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -179,9 +198,25 @@ class _PulsingDotState extends State<_PulsingDot>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
+    );
     _scale = Tween<double>(begin: 0.7, end: 1.3)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+    if (widget.isTracking) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _PulsingDot oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isTracking != oldWidget.isTracking) {
+      if (widget.isTracking) {
+        _controller.repeat(reverse: true);
+      } else {
+        _controller.stop();
+      }
+    }
   }
 
   @override

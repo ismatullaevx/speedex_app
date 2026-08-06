@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:speedex_app/app/app.dart';
 import 'package:speedex_app/providers/history_provider.dart';
@@ -11,6 +12,7 @@ import 'package:speedex_app/services/storage_service.dart';
 
 void main() {
   testWidgets('Speedex app smoke test — home screen renders', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
     final storageService = StorageService();
     final settingsService = SettingsService();
 
