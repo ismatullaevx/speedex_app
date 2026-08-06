@@ -1,17 +1,91 @@
-# speedex_app
+# 🚀 Speedex
 
-A new Flutter project.
+Speedex is a modern Flutter application that tracks your speed in real time using your device's GPS.
 
-## Getting Started
+Whether you are walking, running, cycling, riding a motorcycle, or driving a car, Speedex helps you monitor your speed and trip statistics with a clean and simple interface.
 
-This project is a starting point for a Flutter application.
+## ✨ Features
 
-A few resources to get you started if this is your first Flutter project:
+- 🚀 Real-time GPS speed tracking
+- 📈 Maximum speed tracking
+- 📊 Average speed calculation
+- 📍 Distance measurement
+- ⏱️ Trip timer
+- 📂 Session history
+- 🌙 Modern dark UI
+- ⚡ Smooth animations
+- 📱 Android support
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## 📸 Screenshots
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+> Screenshots will be added soon.
+
+## 🛠️ Built With
+
+- Flutter
+- Dart
+- Material 3
+- Geolocator
+- Shared Preferences
+
+## 🚀 Getting Started
+
+Clone the repository:
+
+```bash
+git clone https://github.com/your-username/speedex.git
+```
+
+Go to the project folder:
+
+```bash
+cd speedex
+```
+
+Install dependencies:
+
+```bash
+flutter pub get
+```
+
+Run the application:
+
+```bash
+flutter run
+```
+
+## 📂 Project Structure
+
+```
+lib/
+├── models/
+├── screens/
+├── widgets/
+├── services/
+├── utils/
+└── main.dart
+```
+
+## 📌 Roadmap
+
+- [x] Home Screen
+- [x] GPS Speed Tracking
+- [ ] Route Tracking
+- [ ] Google Maps Integration
+- [ ] Speed Charts
+- [ ] Export Ride Data
+- [ ] Cloud Backup
+- [ ] Achievements
+- [ ] Multi-language Support
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome.
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+Made with ❤️ using Flutter.
