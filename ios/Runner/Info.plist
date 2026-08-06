@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to location when open to track your speed and distance.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs access to location always to track your speed and distance even when the screen is off.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app needs access to location always to track your speed and distance.</string>
 </dict>
 </plist>
