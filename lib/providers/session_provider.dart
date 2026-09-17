@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -38,10 +39,8 @@ class SessionProvider extends ChangeNotifier {
   Timer? _ticker;
   DateTime? _sessionStart;
 
-  // Accumulators and buffers for GPS tracking
+  // Accumulators for GPS tracking
   Position? _lastValidPosition;
-  double _lastSpeedKmh = 0.0;
-  final List<double> _speedBuffer = [];
   double _totalDistance = 0.0;
   int _movingTimeSeconds = 0;
 
@@ -53,9 +52,7 @@ class SessionProvider extends ChangeNotifier {
     _stats = SessionStats.zero;
     _totalDistance = 0.0;
     _movingTimeSeconds = 0;
-    _speedBuffer.clear();
     _lastValidPosition = null;
-    _lastSpeedKmh = 0.0;
     _sessionStart = DateTime.now();
 
     final error = await _locationService.startTracking();
@@ -75,7 +72,7 @@ class SessionProvider extends ChangeNotifier {
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       final elapsed = DateTime.now().difference(_sessionStart!).inSeconds;
 
-      // Accumulate moving time when the user is moving (smoothed speed > 0.8 km/h).
+      // Accumulate moving time when the user is moving (current speed > 0.8 km/h).
       // This prevents stationary GPS drift from bloating moving time.
       if (_stats.currentSpeedKmh > 0.8) {
         _movingTimeSeconds++;
@@ -125,41 +122,29 @@ class SessionProvider extends ChangeNotifier {
 
   // ── GPS position handler ──────────────────────────────────────────────────
   void _onPositionUpdate(Position position) {
-    // 1. Verify accuracy is good.
-    // If accuracy is poor (error radius > 20 meters), we treat speed as 0.0,
-    // skip distance calculation, and add 0.0 to the smoothing buffer.
-    final bool isAccuracyPoor = position.accuracy > 20.0;
-
-    double rawSpeedKmh = 0.0;
-
-    if (isAccuracyPoor) {
-      rawSpeedKmh = 0.0;
-    } else {
-      // 2. Handle invalid speed reports (negative, NaN, infinite)
-      final rawSpeed = position.speed;
-      if (rawSpeed < 0 || rawSpeed.isNaN || !rawSpeed.isFinite) {
-        rawSpeedKmh = 0.0;
-      } else {
-        // Convert from m/s to km/h
-        rawSpeedKmh = rawSpeed * 3.6;
-      }
+    // 1. Calculate raw speed in km/h directly from position.speed
+    final rawSpeed = position.speed;
+    double speedKmh = 0.0;
+    if (rawSpeed > 0 && !rawSpeed.isNaN && rawSpeed.isFinite) {
+      speedKmh = rawSpeed * 3.6;
     }
 
-    // 3. Ignore GPS spikes and unrealistic jumps.
-    // If acceleration exceeds 50.0 km/h per second (approx 13.9 m/s²), it is treated as a GPS spike.
-    if (_lastValidPosition != null && !isAccuracyPoor) {
-      final dt = position.timestamp.difference(_lastValidPosition!.timestamp).inMilliseconds / 1000.0;
-      if (dt >= 0.5) {
-        final acceleration = (rawSpeedKmh - _lastSpeedKmh).abs() / dt;
-        if (acceleration > 50.0) {
-          // Ignore this update entirely as it represents an unrealistic jump
-          return;
-        }
-      }
-    }
+    // 2. Debug logging for every received GPS position
+    print(
+      'GPS: speed=${position.speed}, '
+      'accuracy=${position.accuracy}, '
+      'timestamp=${position.timestamp}, '
+      'calculatedSpeed=${speedKmh.toStringAsFixed(2)} km/h'
+    );
 
-    // 4. Calculate distance using distance between consecutive valid coordinates
-    if (_lastValidPosition != null && !isAccuracyPoor) {
+    // 3. Current speed updates immediately from latest valid GPS reading without buffer/moving average delay
+    // Stationary threshold (< 0.5 km/h) suppresses stationary noise jitter
+    final currentSpeed = speedKmh < 0.5 ? 0.0 : speedKmh;
+
+    // 4. Distance calculation:
+    // Accumulate distance using Geolocator.distanceBetween only when accuracy is reasonable (<= 50m)
+    final bool isAccuracyAcceptableForDistance = position.accuracy <= 50.0;
+    if (_lastValidPosition != null && isAccuracyAcceptableForDistance) {
       final distanceDelta = Geolocator.distanceBetween(
         _lastValidPosition!.latitude,
         _lastValidPosition!.longitude,
@@ -168,34 +153,29 @@ class SessionProvider extends ChangeNotifier {
       );
 
       // Prevent GPS jitter from inflating distance when stationary
-      if (rawSpeedKmh > 0.5) {
+      if (currentSpeed > 0.5) {
         _totalDistance += distanceDelta;
       }
     }
 
-    // Update references for next calculation
-    if (!isAccuracyPoor) {
+    if (isAccuracyAcceptableForDistance) {
       _lastValidPosition = position;
-      _lastSpeedKmh = rawSpeedKmh;
     }
 
-    // 5. Smooth the speed using a moving average of the last 4 readings (approx. 4 seconds)
-    _speedBuffer.add(rawSpeedKmh);
-    if (_speedBuffer.length > 4) {
-      _speedBuffer.removeAt(0);
-    }
-    final smoothedSpeed = _speedBuffer.reduce((a, b) => a + b) / _speedBuffer.length;
+    // 5. Maximum speed tracking (independent from current speed display)
+    final double maxSpeed = math.max(
+      _stats.maxSpeedKmh,
+      isAccuracyAcceptableForDistance ? currentSpeed : _stats.maxSpeedKmh,
+    );
 
-    // 6. Update max speed only when the new speed is greater than the previous maximum
-    final maxSpeed = smoothedSpeed > _stats.maxSpeedKmh ? smoothedSpeed : _stats.maxSpeedKmh;
-
-    // 7. Calculate average speed as total distance divided by total moving time
+    // 6. Average speed calculation (total distance divided by total moving time)
     final avgSpeed = _movingTimeSeconds > 0
         ? (_totalDistance * 3.6) / _movingTimeSeconds
         : 0.0;
 
+    // 7. Update stats and notify listeners immediately for real-time UI rebuild
     _stats = _stats.copyWith(
-      currentSpeedKmh: smoothedSpeed,
+      currentSpeedKmh: currentSpeed,
       maxSpeedKmh: maxSpeed,
       avgSpeedKmh: avgSpeed,
       distanceMeters: _totalDistance,
