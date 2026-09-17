@@ -42,6 +42,7 @@ class _SpeedometerWidgetState extends State<SpeedometerWidget>
   void didUpdateWidget(SpeedometerWidget old) {
     super.didUpdateWidget(old);
     if (old.currentSpeed != widget.currentSpeed) {
+      print('UI: received speed=${widget.currentSpeed} at ${DateTime.now()}');
       _prevSpeed = old.currentSpeed;
       _animation = Tween<double>(
         begin: _prevSpeed,

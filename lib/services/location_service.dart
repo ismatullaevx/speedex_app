@@ -41,6 +41,11 @@ class LocationService {
 
     _positionSub = Geolocator.getPositionStream(locationSettings: settings)
         .listen((position) {
+      print(
+        'GPS: speed=${position.speed}, '
+        'accuracy=${position.accuracy}, '
+        'timestamp=${position.timestamp}'
+      );
       _controller?.add(position);
     });
 
